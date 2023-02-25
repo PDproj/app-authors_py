@@ -1,3 +1,6 @@
+# app/main.py
+
+import os
 from fastapi import FastAPI
 from server.routes.author import router as AuthorRouter
 

@@ -1,3 +1,5 @@
+# docker-compose.yml
+
 version: "3.8"
 
 services:
@@ -5,9 +7,9 @@ services:
         # build: ./app
         image: cfeliot/app-author_py:1
         volumes:
-            - .:/code
+            - .:/app
         environment:
-            - DB_URL=mongodb://db/myTestDB
+            - DATABASE_URL=postgresql://postgres:postgres@db:5432/distribuida
             - SERVER_PORT=8080
         depends_on:
             - db
@@ -18,11 +20,15 @@ services:
         expose:
             - 8080
     db:
-        image: mongo
-        ports:
-            - 27017:27017
-        # volumes:
-        #     - taskdb:/data/db
+        image: arm64v8/postgres
+        volumes:
+            - postgres_data:/var/lib/postgresql/data/
+        expose:
+            - 5432
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=distribuida
     proxy:
         image: traefik:v2.9.6
         command: --api.insecure=true --providers.docker
@@ -38,25 +44,5 @@ services:
         ports:
             - "16686:16686"
             - "14250:14250"
-    books-service:
-        image: jaimesalvador/app-books:1.0.0
-        environment:
-            DB_CONNECTION_USER: postgres
-            DB_CONNECTION_PASSWORD: postgres
-            DB_CONNECTION_URL: jdbc:postgresql://postgres-sql:5432/distribuida
-            SERVER_PORT: 7001
-            AUTHOR_URL: http://proxy/app2
-            TRACING_HOST: tracing
-        depends_on:
-            - db
-        deploy:
-            replicas: 1
-        expose:
-            - 7001
-        labels:
-            - "traefik.http.routers.books.rule=PathPrefix(`/app1`)"
-            - "traefik.http.middlewares.books.stripprefix.prefixes=/app1"
-            - "traefik.http.routers.books.middlewares=books"
-
 volumes:
-    taskdb:
+    postgres_data:

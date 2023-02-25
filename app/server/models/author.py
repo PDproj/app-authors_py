@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field, constr, create_model
+from pydantic import BaseModel, Field, constr
 
 
 class SchemaAuthor(BaseModel):

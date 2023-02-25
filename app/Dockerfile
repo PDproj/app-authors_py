@@ -1,21 +1,21 @@
-# Pull de la imagen base oficial
+# Dockerfile
+
+# pull the official docker image
 FROM python:3.9.6-alpine
 
+# set work directory
+WORKDIR /app
 
-# setup del directorio de trabajo
-WORKDIR /code
-
-# Configuración de las variables de ambiente
+# set env variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-
-
-RUN pip install --upgrade pip
-COPY requirements.txt /code/
+# install dependencies
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+# copy project
+COPY . .
 
-COPY . ./code/
-
+# run entrypoint.sh
 ENTRYPOINT python app/main.py

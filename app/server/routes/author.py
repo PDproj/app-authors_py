@@ -1,13 +1,6 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException
 from fastapi.encoders import jsonable_encoder
-
-from server.database import (
-    add_author,
-    delete_author,
-    retrieve_author,
-    retrieve_authors,
-    update_author,
-)
+import server.db as db
 
 from server.models.author import (
     ErrorResponseModel,
@@ -19,53 +12,53 @@ from server.models.author import (
 router = APIRouter()
 
 
-@router.get("", response_description="Authors retrieved")
+@router.get("")
 async def get_authors():
-    authors = await retrieve_authors()
-    if authors:
-        return ResponseModel(authors, "Authors data retrieved successfully")
-    return ResponseModel(authors, "Empty list returned")
+    return await db.Author.objects.all()
 
 
-@router.get("/{id}", response_description="Author data retrieved")
-async def get_author_data(id):
-    author = await retrieve_author(id)
-    if author:
-        return ResponseModel(author, "Author data retrieved successfully")
-    return ErrorResponseModel("An error occurred.", 404, "Author doesn't exist.")
+@router.get("/{id}")
+async def get_author_data(id: int):
+    return await db.Author.objects.get(id=id)
 
 
-@router.post("", response_description="Author data added into the database")
-async def add_author_data(author: SchemaAuthor = Body(...)):
-    author = jsonable_encoder(author)
-    new_author = await add_author(author)
-    return ResponseModel(new_author, "Author added successfully.")
+@router.post("")
+async def create_author(author: db.Author):
+    await author.save()
+    return author
 
 
 @router.put("/{id}")
-async def update_author_data(id: str, req: UpdateAuthorModel = Body(...)):
-    req = {k: v for k, v in req.dict().items() if v is not None}
-    updated_author = await update_author(id, req)
-    if updated_author:
-        return ResponseModel(
-            "Author with ID: {} name update is successful".format(id),
-            "Author name updated successfully",
-        )
-    return ErrorResponseModel(
-        "An error occurred",
-        404,
-        "There was an error updating the author data.",
+async def update_author_data(id: int, author: UpdateAuthorModel = Body(...)):
+    try:
+        await db.Author.objects.get(id=id)
+    except:
+        raise HTTPException(status_code=404, detail="Author doesn't exist.")
+    await db.Author.objects.filter(id=id).update(**author.dict())
+    return ResponseModel(author, "Author updated successfully.")
+
+
+@router.delete("/{id}")
+async def delete_author(id: int):
+    try:
+        await db.Author.objects.get(id=id)
+    except:
+        raise HTTPException(status_code=404, detail="Author doesn't exist.")
+    await db.Author.objects.filter(id=id).delete()
+    return ResponseModel("Author with ID: {} removed".format(id), "Author deleted successfully.")
+
+
+@router.on_event("startup")
+async def startup():
+    if not db.database.is_connected:
+        await db.database.connect()
+    # create a dummy entry
+    await db.Author.objects.get_or_create(
+        id=1, firstname="John", lastname="Doe"
     )
 
 
-@router.delete("/{id}", response_description="Author data deleted from the database")
-async def delete_author_data(id: str):
-    deleted_author = await delete_author(id)
-    if deleted_author:
-        return ResponseModel(
-            "Author with ID: {} removed".format(
-                id), "Author deleted successfully"
-        )
-    return ErrorResponseModel(
-        "An error occurred", 404, "Author with id {0} doesn't exist".format(id)
-    )
+@router.on_event("shutdown")
+async def shutdown():
+    if db.database.is_connected:
+        await db.database.disconnect()
