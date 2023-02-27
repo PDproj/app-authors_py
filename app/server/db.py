@@ -20,8 +20,8 @@ class Author(ormar.Model):
         tablename = "authors"
 
     id: int = ormar.Integer(primary_key=True)
-    firstname: str = ormar.String(max_length=100)
-    lastname: str = ormar.String(max_length=100)
+    firstName: str = ormar.String(max_length=100)
+    lastName: str = ormar.String(max_length=100)
 
 
 engine = sqlalchemy.create_engine(settings.db_url)

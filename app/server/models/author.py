@@ -3,14 +3,14 @@ from pydantic import BaseModel, Field, constr
 
 
 class SchemaAuthor(BaseModel):
-    firstname: constr(strict=True, min_length=2, max_length=50) = Field(...)
-    lastname: constr(strict=True, min_length=2, max_length=50) = Field(...)
+    firstName: constr(strict=True, min_length=2, max_length=50) = Field(...)
+    lastName: constr(strict=True, min_length=2, max_length=50) = Field(...)
 
     class config:
         schema_extra = {
             "ejemplo": {
-                "firstname": "John",
-                "lastname": "Doe",
+                "firstName": "John",
+                "lastName": "Doe",
             }
         }
 
@@ -22,8 +22,8 @@ class UpdateAuthorModel(BaseModel):
     class config:
         schema_extra = {
             "ejemplo": {
-                "firstname": "John",
-                "lastname": "Doe",
+                "firstName": "John",
+                "lastName": "Doe",
             }
         }
 

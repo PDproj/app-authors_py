@@ -54,7 +54,16 @@ async def startup():
         await db.database.connect()
     # create a dummy entry
     await db.Author.objects.get_or_create(
-        id=1, firstname="John", lastname="Doe"
+        id=1, firstName="John", lastName="Doe"
+    )
+    await db.Author.objects.get_or_create(
+        id=2, firstName="Jane", lastName="Doe"
+    )
+    await db.Author.objects.get_or_create(
+        id=3, firstName="John", lastName="Smith"
+    )
+    await db.Author.objects.get_or_create(
+        id=4, firstName="Jane", lastName="Smith"
     )
 
 
