@@ -4,6 +4,7 @@
 FROM python:3.9.6-alpine
 
 # set work directory
+RUN mkdir /app
 WORKDIR /app
 
 # set env variables
@@ -15,7 +16,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # copy project
-COPY . .
+COPY . /app
 
 # run entrypoint.sh
-ENTRYPOINT python app/main.py
+CMD [ "python", "main.py" ]

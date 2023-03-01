@@ -5,12 +5,12 @@ version: "3.8"
 services:
     authors-service:
         # build: ./app
-        image: cfeliot/app-author_py:1
+        image: jairmesalvador/authors-grupal-1
         volumes:
             - .:/app
         environment:
             - DATABASE_URL=postgresql://postgres:postgres@db:5432/distribuida
-            - SERVER_PORT=8080
+            - SERVER_PORT=7072
         depends_on:
             - db
         labels:
@@ -18,9 +18,9 @@ services:
             - "traefik.http.middlewares.authors.stripprefix.prefixes=/app2"
             - "traefik.http.routers.authors.middlewares=authors"
         expose:
-            - 8080
+            - 7072
     db:
-        image: arm64v8/postgres
+        image: postgres:alpine
         volumes:
             - postgres_data:/var/lib/postgresql/data/
         expose:
@@ -29,32 +29,34 @@ services:
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
             - POSTGRES_DB=distribuida
-    db-mongo:
-        image: mongo
-        ports:
-            - 27017:27017
-        # volumes:
-        #     - taskdb:/data/db
-
     books-service:
-        image: jaimesalvador/app-books:1.0.0
+        image: jairmesalvador/books-grupal-1
         environment:
-            DB_CONNECTION_USER: postgres
-            DB_CONNECTION_PASSWORD: postgres
-            DB_CONNECTION_URL: jdbc:postgresql://postgres-sql:5432/distribuida
-            SERVER_PORT: 7001
-            AUTHOR_URL: http://proxy/app2
-            TRACING_HOST: tracing
-        depends_on:
-            - db-mongo
-        deploy:
-            replicas: 1
+            SERVER_PORT: 7071
+            spring.data.mongodb.host: mongodb-service
+            spring.data.mongodb.port: 27017
+            spring.data.mongodb.database: distribuida
+            URL_AUTHOR: http://proxy/app2/authors
+        ports:
+            - "7071:7071"
         expose:
-            - 7001
+            - "7071"
+        depends_on:
+            - mongodb-service
+            - authors-service
         labels:
             - "traefik.http.routers.books.rule=PathPrefix(`/app1`)"
             - "traefik.http.middlewares.books.stripprefix.prefixes=/app1"
             - "traefik.http.routers.books.middlewares=books"
+    mongodb-service:
+        image: mongo:latest
+        ports:
+            - "27017:27017"
+        expose:
+            - "27017"
+        volumes:
+            - ./script.js:/docker-entrypoint-initdb.d/script.js:ro
+
     proxy:
         image: traefik:v2.9.6
         command: --api.insecure=true --providers.docker
